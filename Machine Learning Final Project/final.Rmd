@@ -1,0 +1,114 @@
+---
+title: "Practical Machine Learning"
+author: "Elliot Ting"
+date: "July 12, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Objective
+The goal is to predict the manner in which they did the exercise.
+
+### Import the training and test data.
+```{r, results = FALSE}
+download.file('https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv', 'train.csv')
+
+download.file('https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv', 'test.csv')
+
+training <- read.csv2('train.csv', sep = ',')
+test <- read.csv2('test.csv', sep = ',')
+```
+
+### How did we build our model?
+#### Exploratory analysis
+```{r, results = FALSE}
+library(caret)
+library(dplyr)
+library(C50)
+names(training)
+```
+We have 159 different variables that we want to use to predict classe. We want to see if we can narrow the amount of variables down.
+
+Let's see which variables correlate with the classe. We'll change classe into numerics and pull out the data points for each one.
+```{r, results = FALSE}
+training$classe <- as.numeric(training$classe)
+
+a <- training[training$classe == 1,]
+b <- training[training$classe == 2,]
+c <- training[training$classe == 3,]
+d <- training[training$classe == 4,]
+e <- training[training$classe == 5,]
+```
+I suspected that knowing who performed the action would affect our prediction, so I created a table of the classe for each person starting from A to E.
+```{r, echo = FALSE, results = TRUE}
+table(a$user_name)
+table(b$user_name)
+table(c$user_name)
+table(d$user_name)
+table(e$user_name)
+```
+Clearly everyone is more prone to having a classe of A, but the then we see some variance between users after that.
+
+Let's see how accurate we can get using just a person's name. We'll use a multinomial logistic regression as a baseline. Then we test a classification tree.
+```{r, echo = TRUE, results = FALSE}
+training$classe <- as.factor(training$classe)
+levels(training$classe) <- c('A', 'B', 'C', 'D', 'E')
+
+fit1 <- train(classe ~ user_name, data = training, method = 'multinom')
+fit2 <- train(classe ~ user_name, data = training, method = 'rpart')
+```
+Both models had an accuracy of about 28%.
+
+### Feature Selection
+We want to narrow down the variables.  
+
+Looking at the variables names, let's see which ones we can get rid of.
+```{r}
+training <- select(training, -c(cvtd_timestamp, X))
+```
+
+Now lets use the C50 algorithm to come up with a classification tree and see which covariates are the most used.
+```{r}
+
+## We have to change the factors to integers to make the algorithm work.
+for (i in 1:157) {
+        training[,i] <- as.numeric(training[,i])
+}
+fit3 <- C5.0(training[,-158], training[,158], trials = 10)
+
+## We have to change the factors to integers to make the predictions work using the test set data.
+for(i in 1:160) {
+     test[,i] <- as.numeric(test[,i])
+}
+```
+
+Here are the error rates of the 10 different trials.
+```{r}
+print(fit3$boostResults)
+```
+
+The following are our predictions.
+```{r}
+predict(fit3, newdata = test)
+```
+
+If we wanted to, we could produce a 'fancier' model by using C50's output on which attributes were used the most.
+
+### How did we use cross validation?
+For random forests, there are no need to do cross validation to get an unbiased estimate of the test set error.  It is estimated internally.
+
+For the multinomial logistic regression, we used boostrapping to conduct cross validation.
+
+For the C50 algorithm we used 10 different trials to determine a final model.  That's how cross validation was used.
+
+### What is the expected out of sample error?
+Our of 10 trials the average error was 5.29%.  So we can expect taht our out of sample error will be that amount.
+
+### Why did we make the choices we made?
+The use of the C50 algorithm was based on a public benchmark performed by a consulting group.
+https://rpubs.com/m3cinc/Benchmarking_20_Machine_Learning_Models_Accuracy_and_Speed
+
+The speed of this algorithm in producing a decisions tree was incredible.  It also allowed for the easy use of boosting.  It was easily much faster than running a random forest or any kind of neural net.
