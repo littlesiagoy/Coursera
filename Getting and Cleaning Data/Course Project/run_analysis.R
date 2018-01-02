@@ -1,0 +1,149 @@
+run_analysis <- function() {
+    # Gather training data and the column names.
+    train_data <- read.table('X_train.txt',
+                             sep = '')
+    train_activities <- read.table('y_train.txt',
+                                sep = "")
+    list_of_features <- read.table('features.txt',
+                                            sep = "")
+    num_of_train_data_col <- dim(train_data)[2]
+    
+    list_of_features$V2 <- as.character(list_of_features$V2)
+    
+    for(i in 1:num_of_train_data_col) {
+        names(train_data)[i] <- list_of_features[i,2]
+    }
+    
+    total_train_data <- cbind(train_data, train_activities)
+    
+    # Gather test data and the column names.
+    test_data <- read.table('X_test.txt',
+                             sep = '')
+    test_activities <- read.table('y_test.txt',
+                            sep = '')
+    
+    
+    
+    num_of_test_data_col <- dim(test_data)[2]
+    
+    for(i in 1:num_of_test_data_col) {
+        names(test_data)[i] <- list_of_features[i,2]
+    }
+    
+    total_test_data <- cbind(test_data, test_activities)
+    # Merge the two data sets together
+    total_data <- rbind(total_test_data, total_train_data)
+    
+    
+    ## Extracts only the measurements on the mean and standard deviation for each
+    ## measurement.
+    
+    # Extract all column names.
+    data_col <- names(total_data)
+    
+    # Get a vector of all the column names that contain mean or std.
+    has_mean_or_std <- grep("mean\\()|std\\()", data_col)
+    
+    # Use the previous vector to subset the total_data
+    total_data2 <- total_data[,has_mean_or_std]
+    
+    ## Use descriptive activity names to names the activities in the data set.
+    
+    # Readd the activities col to total_data2
+    total_data3 <- cbind(total_data2, total_data[,562])
+    
+    total_data3[,67] <- gsub(1, "WALKING", total_data3[,67])
+    total_data3[,67] <- gsub(2, "WALKING_UPSTAIRS", total_data3[,67])
+    total_data3[,67] <- gsub(3, "WALKING_DOWNSTAIRS", total_data3[,67])
+    total_data3[,67] <- gsub(4, "SITTING", total_data3[,67])
+    total_data3[,67] <- gsub(5, "STANDING", total_data3[,67])
+    total_data3[,67] <- gsub(6, "LAYING", total_data3[,67])
+    
+    ## Appropriately label the data set with descriptive variable names.
+    colnames(total_data3) <- c('Body Accelerometer X-axis Mean',
+                               'Body Accelerometer Y-axis Mean',
+                               'Body Accelerometer Z-axis Mean',
+                               'Body Accelerometer X-axis StdDev',
+                               'Body Accelerometer Y-axis StdDev',
+                               'Body Accelerometer Z-axis StdDev',
+                               'Gravity Accelerometer X-axis Mean',
+                               'Gravity Accelerometer Y-axis Mean',
+                               'Gravity Accelerometer Z-axis Mean',
+                               'Gravity Accelerometer X-axis StdDev',
+                               'Gravity Accelerometer Y-axis StdDev',
+                               'Gravity Accelerometer Z-axis StdDev',
+                               'Body Accelerometer Jerk X-axis Mean',
+                               'Body Accelerometer Jerk Y-axis Mean',
+                               'Body Accelerometer Jerk Z-axis Mean',
+                               'Body Accelerometer Jerk X-axis StdDev',
+                               'Body Accelerometer Jerk Y-axis StdDev',
+                               'Body Accelerometer Jerk Z-axis StdDev',
+                               'Body Gyroscope X-axis Mean',
+                               'Body Gyroscope Y-axis Mean',
+                               'Body Gyroscope Z-axis Mean',
+                               'Body Gyroscope X-axis StdDev',
+                               'Body Gyroscope Y-axis StdDev',
+                               'Body Gyroscope Z-axis StdDev',
+                               'Body Gyroscope Jerk X-axis Mean',
+                               'Body Gyroscope Jerk Y-axis Mean',
+                               'Body Gyroscope Jerk Z-axis Mean',
+                               'Body Gyroscope Jerk X-axis StdDev',
+                               'Body Gyroscope Jerk Y-axis StdDev',
+                               'Body Gyroscope Jerk Z-axis StdDev',
+                               'Body Accelerometer Magnitude Mean',
+                               'Body Accelerometer Magnitude StdDev',
+                               'Gravity Accerlation Magnitude Mean',
+                               'Gravity Accerlation Magnitude StdDev',
+                               'Body Accelerometer Jerk Magnitude Mean',
+                               'Body Accelerometer Jerk Magnitude StdDev',
+                               'Body Gryoscope Magnitude Mean',
+                               'Body Gryoscope Magnitude StdDev',
+                               'Body Gryoscope Jerk Magnitude Mean',
+                               'Body Gryoscope Jerk Magnitude StdDev',
+                               'Fourier Transform Body Accelerometer X-axis Mean',
+                               'Fourier Transform Body Accelerometer Y-axis Mean',
+                               'Fourier Transform Body Accelerometer Z-axis Mean',
+                               'Fourier Transform Body Accelerometer X-axis StdDev',
+                               'Fourier Transform Body Accelerometer Y-axis StdDev',
+                               'Fourier Transform Body Accelerometer Z-axis StdDev',
+                               'Fourier Transform Body Accelerometer Jerk X-axis Mean',
+                               'Fourier Transform Body Accelerometer Jerk Y-axis Mean',
+                               'Fourier Transform Body Accelerometer Jerk Z-axis Mean',
+                               'Fourier Transform Body Accelerometer Jerk X-axis StdDev',
+                               'Fourier Transform Body Accelerometer Jerk Y-axis StdDev',
+                               'Fourier Transform Body Accelerometer Jerk Z-axis StdDev',
+                               'Fourier Body Gyroscope X-axis Mean',
+                               'Fourier Body Gyroscope Y-axis Mean',
+                               'Fourier Body Gyroscope Z-axis Mean',
+                               'Fourier Body Gyroscope X-axis StdDev',
+                               'Fourier Body Gyroscope Y-axis StdDev',
+                               'Fourier Body Gyroscope Z-axis StdDev',
+                               'Fourier Body Accelerometer Magnitude Mean',
+                               'Fourier Body Accelerometer Magnitude StdDev',
+                               'Fourier Body Accelerometer Jerk Magnitude Mean',
+                               'Fourier Body Accelerometer Jerk Magnitude StdDev',
+                               'Fourier Body Gyroscope Magnitude Mean',
+                               'Fourier Body Gyroscope Magnitude StdDev',
+                               'Fourier Body Gyroscope Jerk Magnitude Mean',
+                               'Fourier Body Gyroscope Jerk Magnitude StdDev',
+                               'Activity')
+                               
+                               
+                               
+                             
+    ## Create a second, independent tidy data set with the average of each
+    ## variable for each activity and each subject.
+    # Extract all column names.
+    data_col2 <- names(total_data3)
+    
+    # Get a vector of all the column names that contain mean or std.
+    has_mean <- grep("[Mm]ean", data_col2)
+    
+    # Use the previous vector to subset the total_data
+    total_data4 <- total_data3[,has_mean]
+    
+    # Readd the activities col to total_data4
+    total_data4 <- cbind(total_data4, Activity = total_data3[,67])
+    
+    write.table(total_data4, 'tidy_data.txt', row.name = FALSE)
+}
